@@ -1,6 +1,6 @@
 # nanook-skill
 
-Agent skills for the [Nanook](https://nanook.xhub.io) test data generation framework.
+Agent skills for creating equivalence-class-tables — structured test case design for pages, APIs, and forms.
 
 Install with:
 
