@@ -28,15 +28,6 @@ Also covers: matrix tables (state transitions), specification tables (rule-based
 generation), multiplicity for code lists, tags/filters for named subsets, and the
 processor's logger-based error contract.
 
-### nanook-app-runner
-
-Connects an application to a table-driven Playwright test execution: one shared runner
-over generated suite files, page objects under a common contract, base states created via
-API instead of UI clicks (factor 200–400), and resource pooling by effect profile (15
-permission profiles instead of 400 users).
-
-**Trigger phrases:** "connect app to nanook", "table-driven test execution", "page object contract", "base state setup", "suite runner", "user pooling"
-
 #### Generated Excel structure
 
 - **Column A–E:** Field definitions (name, section type, equivalence classes, generators, comments)
@@ -51,6 +42,25 @@ The skill applies the CASCADE technique to achieve exactly 100% equivalence clas
 #### Technology
 
 Uses `exceljs` for Excel generation with cell styling and formula support. Output is fully compatible with Nanook's `ParserDecision` format.
+
+### nanook-app-runner
+
+Connects an application to a table-driven Playwright test execution: one shared runner
+over generated suite files, page objects under a common contract, base states created via
+API instead of UI clicks (factor 200–400), and resource pooling by effect profile (15
+permission profiles instead of 400 users).
+
+**Trigger phrases:** "connect app to nanook", "table-driven test execution", "page object contract", "base state setup", "suite runner", "user pooling"
+
+#### What it does
+
+1. Wires an app into the shared suite runner (registry, app connection object, port stack)
+2. Builds page objects under the common contract — observe and compute, never judge
+3. Creates base states via API with session transfer instead of per-test UI logins
+4. Pools expensive resources (users, tenants) by effect profile, with the
+   share-only-what-the-test-does-not-mutate counter-rule
+5. Keeps the runner invariants intact: no hand-written suites, no framework vocabulary
+   in the data, gaps as a third outcome
 
 ## Supported agents
 
