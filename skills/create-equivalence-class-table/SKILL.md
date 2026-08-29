@@ -81,10 +81,12 @@ When to use: many fields with standard validation — the classes would be mecha
 When NOT: as soon as classes are domain decisions (behavior classes, code lists, base
 states, CASCADE fine-tuning) — then write the decision table yourself.
 
-**A1-marker trap:** the docs and the sheet-type filter accept `<SPECIFICATION>`, but
-`createDefaultFileProcessor()` registers the parser under `<SPECIFICATION_TABLE>`. The
-mismatched sheet is **silently ignored** (info-level log only). The `registerParser` key
-must literally equal the A1 content.
+**A1-marker trap (nanook-table ≤ 3.0.0):** the docs say `<SPECIFICATION>`, but
+`createDefaultFileProcessor()` registered the parser only under
+`<SPECIFICATION_TABLE>` — the documented sheet was **silently ignored** (info-level log
+only). Fixed in 3.0.1: the factory registers both markers. On older versions write
+`<SPECIFICATION_TABLE>` in A1. In general: the `registerParser` key must literally equal
+the A1 content.
 
 ## 100% Coverage Is the Target for Data Tables
 
