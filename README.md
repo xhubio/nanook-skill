@@ -1,6 +1,6 @@
 # nanook-skill
 
-Agent skills for creating equivalence-class-tables — structured test case design for pages, APIs, and forms.
+Agent skills for table-driven testing with Nanook — structured test case design for pages, APIs, and forms, plus the execution architecture that runs the generated cases.
 
 Install with:
 
@@ -12,9 +12,9 @@ npx skills add xhubio/nanook-skill
 
 ### create-equivalence-class-table
 
-Creates formatted Excel decision tables for equivalence class testing. Works with any test object — pages, APIs, forms.
+Creates formatted Excel tables (decision, matrix, and specification tables) for equivalence class testing. Works with any test object — pages, APIs, forms.
 
-**Trigger phrases:** "create equivalence class table", "decision table", "equivalence class table", "test data table", "nanook table"
+**Trigger phrases:** "create equivalence class table", "decision table", "equivalence class table", "test data table", "nanook table", "matrix table", "specification table"
 
 #### What it does
 
@@ -23,6 +23,19 @@ Creates formatted Excel decision tables for equivalence class testing. Works wit
 3. Defines equivalence classes per field (valid + invalid partitions)
 4. Plans test cases using the CASCADE pattern for 100% coverage
 5. Generates a color-formatted `.xlsx` file with formulas, ready for Nanook's `ImporterXlsx`
+
+Also covers: matrix tables (state transitions), specification tables (rule-based
+generation), multiplicity for code lists, tags/filters for named subsets, and the
+processor's logger-based error contract.
+
+### nanook-app-runner
+
+Connects an application to a table-driven Playwright test execution: one shared runner
+over generated suite files, page objects under a common contract, base states created via
+API instead of UI clicks (factor 200–400), and resource pooling by effect profile (15
+permission profiles instead of 400 users).
+
+**Trigger phrases:** "connect app to nanook", "table-driven test execution", "page object contract", "base state setup", "suite runner", "user pooling"
 
 #### Generated Excel structure
 
