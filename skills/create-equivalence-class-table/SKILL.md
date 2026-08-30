@@ -107,6 +107,36 @@ dependencies, where the last percent is disproportionately expensive — and eve
 is a deliberate, documented decision, not a leftover. Flows count cases, not
 combinations; their referenced data tables still carry the 100% obligation.
 
+## The Builder Is Part of the Skill — Not the Prose Alone (since 2026-08-30)
+
+> **Measured 2026-08-30:** the skill had demanded 100% all along, and still 52 of 64 verein
+> sheets, 116 dashandwerk sheets and 56 invoice-api sheets were off (0.01% to 72%, some
+> above 100%). The rule lived in the text; the **shared builder** (`blatt-bauen.ts`, born on
+> 08-28 from two ad-hoc builders inside scripts, not from the skill) set exactly one `x` per
+> field; `check-table` reported nothing below 100%; and agents accepted "0 errors · 0 hints"
+> at 0.03% coverage as sign-off. On 08-28 a session had even **deliberately dropped**
+> CASCADE in the login table because the suite builder discarded open fields (`a`/`e`) —
+> instead of fixing the tool, the rule was abandoned and "seven of twenty-four" declared
+> "the honest number".
+
+Three consequences so this never repeats in another project:
+
+1. **No new builder.** A project generating decision tables uses the reference
+   implementation — `blatt-bauen.ts` (CASCADE: target = last deviating field; `x` up to and
+   including it, then `a` on the preferred class + `e` on the rest; happy path and `ref:`
+   fields stay closed), `tabellen-blatt.ts` (formulas, colors, truly empty cells) and
+   `suite-writer.ts` (a single `a` is a concrete state). Writing a second builder copies the
+   rule — and copies drift. If a tool cannot read `a`, fix the **tool**, never the marker.
+2. **The gate is mechanical, not prose.** Since 2026-08-30 `check-table` reports below-100%
+   as an **error** (like above 100%), and `tests/deckung-ist-hundert.test.ts` holds, per
+   app, the number of sheets off 100.00% as an upper bound (may only fall). "Done" means:
+   `check-table` 0 errors **including coverage**. Opening the sheet in Excel remains the
+   cross-check, but is no longer the only measurement.
+3. **Data tables only.** The 100% applies to `<DECISION_TABLE>` sheets (main and data
+   sheets alike). Matrix and flow sheets count cases, not combinations — coverage is not
+   their metric, and the guard skips them. A `ref:` main sheet stays closed; its 100%
+   obligation is carried by the referenced data sheet.
+
 ## Formulas and Colors Are Mandatory Parts of Every Table
 
 A workbook without living sum formulas and without color formatting is unfinished — even
