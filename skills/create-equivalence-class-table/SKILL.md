@@ -123,8 +123,8 @@ Three consequences so this never repeats in another project:
 
 1. **No new builder.** A project generating decision tables uses the reference
    implementation — `blatt-bauen.ts` (CASCADE: target = last deviating field; `x` up to and
-   including it, then `a` on the preferred class + `e` on the rest; happy path and `ref:`
-   fields stay closed), `tabellen-blatt.ts` (formulas, colors, truly empty cells) and
+   including it, then `a` on the preferred class + `e` on the rest; only the happy path is
+   closed — **`ref:` fields cascade too**, proven by A/B), `tabellen-blatt.ts` (formulas, colors, truly empty cells) and
    `suite-writer.ts` (a single `a` is a concrete state). Writing a second builder copies the
    rule — and copies drift. If a tool cannot read `a`, fix the **tool**, never the marker.
 2. **The gate is mechanical, not prose.** Since 2026-08-30 `check-table` reports below-100%
@@ -134,8 +134,11 @@ Three consequences so this never repeats in another project:
    cross-check, but is no longer the only measurement.
 3. **Data tables only.** The 100% applies to `<DECISION_TABLE>` sheets (main and data
    sheets alike). Matrix and flow sheets count cases, not combinations — coverage is not
-   their metric, and the guard skips them. A `ref:` main sheet stays closed; its 100%
-   obligation is carried by the referenced data sheet.
+   their metric, and the guard skips them. A trap from the rework itself: `ref:` fields were
+   "closed" for one afternoon because the measurement ran against the suite reader BEFORE
+   its fix — with closed references 100% is arithmetically unreachable. Re-measured (A/B on
+   `RegistrierungVerein`): open references arrive complete. Whoever writes an exception into
+   the builder measures it again after the tool fix.
 
 ## Formulas and Colors Are Mandatory Parts of Every Table
 
