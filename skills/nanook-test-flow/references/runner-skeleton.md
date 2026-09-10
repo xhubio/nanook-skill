@@ -100,7 +100,7 @@ for (const tc of flow.cases) {
 
 ```ts
 // ref::Sheet::Case          → suites/<sheet>.json → tests.find(name === Case)
-// ref::Sheet::[A1-A6]       → the cases of the range, in order
+// ref::Sheet::[A1..A6]       → the cases of the range, in order
 // ref::MatrixSheet::draft→send → { startState: resolveRef(row ref), action: column, expectation: cell }
 ```
 

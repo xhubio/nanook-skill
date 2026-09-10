@@ -176,6 +176,7 @@ Invariants the runner enforces:
 ## Connecting a Project — Checklist
 
 1. Create `testdata-definition/flow/` next to `data/`; put nothing but flow workbooks there.
+   Decide per workbook whether it is hand-written or built by a script, and commit the source.
 2. Add the flow reader (`references/flow-reader.ts`; depends only on `exceljs`). Sheets are
    recognized by `<FLOW_TABLE>` in A1; the reader takes the folder, no per-sheet
    registration.
@@ -207,9 +208,13 @@ Invariants the runner enforces:
 - **Unregistered page objects.** See checklist item 4.
 - **Matrix tables that no flow reads.** Five matrix sheets existed, 24 functions
   re-implemented their cells. A matrix cell reference from a function fixes both.
-- **Editing generated suites** instead of the workbook. The direction is one way:
-  workbook → `suites/*.json` → runner. The workbook is edited by hand and committed;
-  it is never regenerated from anything (it is the point of truth).
+- **Editing a generated artifact** instead of its source. The direction is one way:
+  source → `suites/*.json` → runner. The source is **what a human edits and commits**:
+  the workbook, if it is written by hand; the **builder script**, if the workbook is
+  generated from one (the flow workbook of the reference project is built by a
+  1,000-line script with one block per sheet — there, the script is the point of truth
+  and the workbook is an output like the suites). Never edit the output; never keep
+  both a script and hand edits on the same workbook — the next build wins.
 - **Losing rows when converting.** When a flow moves from `<fn:>` columns to table
   columns, count test rows and verdicts before and after; a sheet whose row count fell is
   a finding, not a cleanup.
