@@ -264,7 +264,12 @@ Invariants the runner enforces:
   generated from one (the flow workbook of the reference project is built by a
   1,000-line script with one block per sheet — there, the script is the point of truth
   and the workbook is an output like the suites). Never edit the output; never keep
-  both a script and hand edits on the same workbook — the next build wins.
+  both a script and hand edits on the same workbook — the next build wins. When a
+  workbook has overtaken its script (hand-made cases the script does not know), let the
+  script catch up **once**, prove it reproduces the checked-in workbook cell for cell,
+  and add a guard "workbook = builder output" per built sheet so the double source
+  cannot come back. Stock data (25 customers) is not a set of equivalence classes: it is
+  a **data catalog sheet** referenced as a range, not 25 cases of a decision table.
 - **Losing rows when converting.** When a flow moves from `<fn:>` columns to table
   columns, count test rows and verdicts before and after; a sheet whose row count fell is
   a finding, not a cleanup.
