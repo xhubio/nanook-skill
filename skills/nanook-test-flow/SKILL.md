@@ -180,7 +180,13 @@ Invariants the runner enforces:
 1. **One API starting point per test.** The first step that needs one creates it (from the
    table's boundary or from what the function names); a later step demanding a *different*
    one throws. Running the second silently inside the first is half a precondition that
-   looks whole.
+   looks whole. **Action sheets** (`ChecklistTick`, `TimeEntryBill`) therefore have **no
+   starting point of their own**: their precondition — the record the action targets — is a
+   data column *before* them in the same row, and the verb takes its target from
+   `ctx.all['Sheet/Case']`. A verb never creates its own target. For the isolated suite
+   runner the same precondition is a `precondition` hook on the shared starting point, not
+   a separate `setup`; "skip the setup when the target is already in context" was rejected —
+   one sheet would have two behaviours, and the skip is a silent fallback.
 2. **`<mode:check>` needs a read-back.** A page object without `readBack` cannot check;
    the runner throws instead of passing — an assertion without an instrument only looks
    like one. At the API boundary `<mode:check>` is rejected: what must hold after creating
