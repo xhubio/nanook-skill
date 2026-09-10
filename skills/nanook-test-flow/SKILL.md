@@ -30,7 +30,8 @@ skill describes the third table kind — the **flow table** — and the runner t
 handles `<DECISION_TABLE>` and `<MATRIX_TABLE>`; on a `<FLOW_TABLE>` it throws *"There is
 no parser for the table type"* — and since a processor loads all workbooks of a folder
 together, one flow sheet in the data folder breaks the whole build. Flow tables live in
-their **own folder** and have their **own reader** (`references/flow-reader.ts`).
+their **own folder** and have their **own reader** (`references/flow-reader.ts`; the reference
+resolver shared with the matrix runner is `references/fall-referenz.ts`).
 
 ```
 testdata-definition/
@@ -177,7 +178,8 @@ Invariants the runner enforces:
 
 1. Create `testdata-definition/flow/` next to `data/`; put nothing but flow workbooks there.
    Decide per workbook whether it is hand-written or built by a script, and commit the source.
-2. Add the flow reader (`references/flow-reader.ts`; depends only on `exceljs`). Sheets are
+2. Add the flow reader (`references/flow-reader.ts`; depends only on `exceljs`) and the
+   reference resolver (`references/fall-referenz.ts`). Sheets are
    recognized by `<FLOW_TABLE>` in A1; the reader takes the folder, no per-sheet
    registration.
 3. Build the runner from `references/runner-skeleton.md`: dispatch on column kind, keep

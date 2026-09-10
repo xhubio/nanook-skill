@@ -1,10 +1,11 @@
 // Reference implementation of the flow-table reader (verbatim from the xhubio SaaS kernel,
-// repo/tools/playwright/nanook/src/flow-writer.ts, 2026-09-10). Depends only on `exceljs`.
+// repo/tools/playwright/nanook/src/flow-writer.ts @ 292b019, 2026-09-10). Depends only on `exceljs`.
 // Comments are German; the grammar is documented in English in ../SKILL.md.
-// The `ref::` cell for <fn:> columns (data reference) is the extension described in
-// SKILL.md and is being added to this reader — see Step.ref in the skeleton.
+// This revision carries the data reference: ColumnKind.funktion.functionName?, Step.ref?: FlowRef,
+// a `-` suffix on a ref cell is a read error, ranges are spelled `A1..A6`.
 
 import ExcelJS from 'exceljs'
+import { looksLikeReference, parseReference } from '../../common/fall-referenz.js'
 
 /**
  * **Liest eine `<FLOW_TABLE>` — eine Zeile ist ein Testfall, die Spalten sind seine
@@ -36,8 +37,22 @@ import ExcelJS from 'exceljs'
  * | `RechtstextEntwurf` (blank — der Standard) | `OK_agbDeutsch` | ein Fall dieser Entscheidungstabelle |
  * | dieselbe | `A1..A6` | ein **Bereich**: sechs Aufrufe nacheinander |
  * | `<fn:function>` | `betriebMitAnmeldung` | eine registrierte Funktion |
+ * | `<fn:buchen>` | `ref::BuchungAnlegen::OK_1` | das **Verb** im Kopf, der **Fall** in der Zelle |
+ * | dieselbe | `ref::KundeAnlegen::B_01..B_25` | ein Bereich von Faellen, je einer ein Aufruf |
  * | `<pc:account>` | `save` | eine Funktion der Page-Class `account` (klickt den Knopf) |
  * | `KundeAnlegen<mode:check>` | `OK_1` | **derselbe Fall, zurueckgelesen** statt eingegeben |
+ *
+ * ─── 🔴 Die Datenreferenz an der Funktion (2026-09-10) ──────────
+ *
+ * Torsten: *„koennte man einer funktion nicht auch eine datenreferenz mitgeben?“*
+ * Die Alternative waere eine vierte Schrittart `<api:…>` gewesen; die Referenz ist
+ * der kleinere Schnitt, weil es die Schreibweise `ref::<Blatt>::<Fall>` in den
+ * Matrix-Achsen laengst gibt.
+ *
+ * ⚪ Der Gewinn steht im Done-Szenario des Plans: Aendert man in `buchhaltung.xlsx`
+ * den Betrag von `OK_1`, wird der Ablauf **rot** an der Auswertung. Vorher war er
+ * von der Tabelle unabhaengig gruen, weil Eingabe und Erwartung dieselbe Konstante
+ * im Code waren — genau die Bauart „Test aus unserem Code“, die CLAUDE.md verbietet.
  *
  * ─── 🔴 Der Modus statt einer eigenen Pruef-Vokabel ─────────────────────────
  *
@@ -91,8 +106,23 @@ export type ColumnKind =
    * - `check` — den Datensatz zuruecklesen und gegen dieselben Felder halten
    */
   | { kind: 'tabelle'; table: string; mode: 'set' | 'check' }
-  /** `<fn:…>`: eine registrierte Funktion. Die Zelle nennt sie. */
-  | { kind: 'funktion' }
+  /**
+   * `<fn:…>`: eine registrierte Funktion.
+   *
+   * ⚪ **Zwei Schreibweisen, und die Zelle entscheidet, welche gilt:**
+   *
+   * | Kopfzeile | Zelle | wer ist die Funktion |
+   * |---|---|---|
+   * | `<fn:function>` | `betriebMitAnmeldung` | die **Zelle** (Bestand, 19 Spalten) |
+   * | `<fn:buchen>` | `ref::BuchungAnlegen::OK_1` | die **Kopfzeile** — die Zelle nennt den FALL |
+   *
+   * 🔴 Das Wort `function` gilt ausdruecklich als „kein Verb". Es ist der
+   * Platzhalter, mit dem heute jede einzelne `<fn:>`-Spalte beschriftet ist; als
+   * Verb gelesen suchte der Laeufer eine registrierte Funktion namens `function`
+   * und meldete das als „nicht registriert" — ein Fehler an einer Stelle, die
+   * niemand angefasst hat.
+   */
+  | { kind: 'funktion'; functionName?: string }
   /** `<pc:account>`: eine Funktion der Page-Class. Die Zelle nennt sie. */
   | { kind: 'page'; eqClass: string }
 
@@ -133,15 +163,41 @@ export interface Column {
   index: number
 }
 
+/**
+ * **Eine Datenreferenz in der Zelle** — `ref::<Blatt>::<Fall>` bzw.
+ * `ref::<Blatt>::<von>..<bis>`.
+ *
+ * Torsten am 2026-09-10: *„koennte man einer funktion nicht auch eine datenreferenz
+ * mitgeben?"* — ja, und es ist der kleinere Schnitt als eine neue Schrittart.
+ *
+ * ⚪ Die Kopfzeile nennt dann das **Verb** (`<fn:buchen>`), die Zelle das
+ * **Substantiv** (den Fall). Was gebucht wird, steht damit in der Tabelle statt als
+ * Literal in `flow/registry.ts` — und aendert man den Betrag in der Tabelle, wird
+ * der Ablauf rot. Vorher war er unabhaengig von ihr gruen, weil Eingabe und
+ * Erwartung dieselbe Konstante waren.
+ */
+export type FlowRef =
+  | { sheet: string; tc: string }
+  | { sheet: string; from: string; until: string }
+
 export interface Step {
   column: Column
   /** Zellinhalt ohne das `-`-Suffix. */
   value: string
-  /** Bereichsangabe `A1-A6` statt eines einzelnen Falls. */
+  /** Bereichsangabe `A1..A6` statt eines einzelnen Falls. */
   area?: { from: string; until: string }
   /**
-   * `true` = muss gelingen. Bei Tabellen-Schritten **immer** `true`: die Erwartung
-   * steht im referenzierten Fall, nicht hier.
+   * Die Datenreferenz der Zelle, falls sie eine ist.
+   *
+   * 🔴 Ist sie gesetzt, kommt die Erwartung des Schritts aus dem referenzierten
+   * **Fall** und nicht aus `succeeds`. Deshalb ist das `-`-Suffix an einer
+   * Referenz-Zelle verboten (siehe die Pruefung beim Lesen): zwei
+   * Erwartungsquellen sind die Verdeckungsfalle, und die zweite gewinnt still.
+   */
+  ref?: FlowRef
+  /**
+   * `true` = muss gelingen. Bei Tabellen-Schritten und bei Referenz-Zellen
+   * **immer** `true`: die Erwartung steht im referenzierten Fall, nicht hier.
    */
   succeeds: boolean
 }
@@ -181,7 +237,11 @@ const withoutSuffix = (head: string): string => {
 
 function parseHead(rawHead: string): ColumnKind {
   const head = withoutSuffix(rawHead)
-  if (/^<fn:[A-Za-z0-9_]*>$/.test(head)) return { kind: 'funktion' }
+  const fn = head.match(/^<fn:([A-Za-z0-9_]*)>$/)
+  if (fn) {
+    const verb = fn[1]
+    return { kind: 'funktion', functionName: verb && verb !== 'function' ? verb : undefined }
+  }
 
   const pc = head.match(/^<pc:([A-Za-z0-9_-]+)>$/)
   if (pc) return { kind: 'page', eqClass: pc[1] }
@@ -212,12 +272,17 @@ function parseHead(rawHead: string): ColumnKind {
 /**
  * Der Namensraum einer Spalte — **was der Schritt ist**, nicht wie er beschriftet ist.
  *
- * 🔵 Bei `<fn:>` liefert die Kopfzeile ihn nicht: Dort steht die Funktion in der ZELLE.
- * Der Namensraum entsteht also erst beim Lesen der Zeile, und diese Funktion gibt fuer
- * `<fn:>` einen leeren Namen zurueck.
+ * 🔵 Bei `<fn:function>` liefert die Kopfzeile ihn nicht: Dort steht die Funktion in
+ * der ZELLE. Der Namensraum entsteht also erst beim Lesen der Zeile, und diese
+ * Funktion gibt fuer diesen Fall einen leeren Namen zurueck.
+ *
+ * ⚪ Bei `<fn:buchen>` steht das Verb im Kopf — dann ist es auch der Namensraum, und
+ * drei Spalten `<fn:buchen>` schreiben in denselben Raum. Das ist dieselbe Regel wie
+ * bei drei Spalten auf `RechtstextEntwurf`: der letzte gewinnt, wie bei jeder
+ * Variablen.
  */
 function namespaceFrom(kind: ColumnKind): string {
-  if (kind.kind === 'funktion') return ''
+  if (kind.kind === 'funktion') return kind.functionName ?? ''
   if (kind.kind === 'page') return kind.eqClass
   return kind.table
 }
@@ -334,6 +399,25 @@ export async function readFlow(file: string, sheet: string): Promise<FlowSuite> 
       const value = succeeds ? raw : raw.slice(0, -1).trim()
 
       /**
+       * 🔴 Ein `-` an einer REFERENZ-Zelle ist derselbe Entwurfsfehler wie an einem
+       * Tabellen-Schritt, nur eine Ebene tiefer: Die Erwartung steht im
+       * referenzierten Fall. Sie hier noch einmal zu setzen hiesse, zwei Quellen fuer
+       * dieselbe Aussage zu fuehren — und die zweite gewinnt still, wenn sie abweicht.
+       *
+       * ⚪ Geprueft wird am ROHEN Zellwert: `ref::X::Y-` traegt das Minus hinter dem
+       * Fallnamen, und nach dem Abschneiden saehe die Zelle unauffaellig aus.
+       */
+      if (!succeeds && looksLikeReference(raw)) {
+        throw new Error(
+          `leseAblauf: „${id}", Spalte „${sp.head}": ein Minuszeichen an einer ` +
+            `Referenz-Zelle („${raw}"). Die Erwartung von „${value}" steht im ` +
+            'referenzierten Fall selbst — hier waere sie eine zweite Quelle, die still ' +
+            'gewinnt, wenn sie abweicht. Wer eine Abweisung fahren will, referenziert ' +
+            'den Fall, der sie erwartet.'
+        )
+      }
+
+      /**
        * 🔴 Ein `-` an einem TABELLEN-Schritt ist ein Entwurfsfehler, kein Kuerzel.
        *
        * Die Erwartung eines Tabellenfalls steht in seiner Tabelle (`Erwartete
@@ -362,10 +446,44 @@ export async function readFlow(file: string, sheet: string): Promise<FlowSuite> 
        * ⚪ Der Bindestrich ist im Fallnamen-Alphabet vergeben; `..` ist es nicht.
        */
       const area = value.match(/^([A-Za-z0-9_-]+)\.\.([A-Za-z0-9_-]+)$/)
+
+      /**
+       * 🔴 **Die Referenz wird HIER zerlegt, mit dem geteilten Aufloeser.**
+       *
+       * `common/fall-referenz.ts` ist derselbe Parser, den `matrix-writer.ts` und
+       * `suite-writer.ts` benutzen — die Kurzform `ref::Blatt::Fall` ist die
+       * Nanook-Form mit leerer Instanz und leerem Feld und braucht deshalb keinen
+       * eigenen. Ein zweiter Parser waere die dritte Quelle fuer eine Schreibweise,
+       * die es schon zweimal gab.
+       *
+       * ⚪ Bei `<fn:buchen>` bleibt `value` der ganze Zellinhalt (fuer den Bericht);
+       * WER gerufen wird, sagt dann die Kopfzeile. Bei `<fn:function>` ohne Referenz
+       * ist die Zelle weiterhin der Funktionsname.
+       */
+      let ref: FlowRef | undefined
+      if (looksLikeReference(value)) {
+        const zerlegt = parseReference(value)
+        if (!zerlegt) {
+          throw new Error(
+            `leseAblauf: „${id}", Spalte „${sp.head}": „${value}" faengt mit „ref:" an, ` +
+              'nennt aber kein Blatt und keinen Fall. Erwartet wird ' +
+              '`ref::<Blatt>::<Fall>` (oder die Nanook-Form ' +
+              '`ref:<instanz>:<Blatt>:<Feld>:<Fall>`). Eine halb geschriebene Referenz ' +
+              'als Funktionsnamen zu lesen hiesse, eine Funktion zu suchen, die ' +
+              '„ref::…" heisst.'
+          )
+        }
+        const bereich = zerlegt.record.match(/^([A-Za-z0-9_-]+)\.\.([A-Za-z0-9_-]+)$/)
+        ref = bereich
+          ? { sheet: zerlegt.entity, from: bereich[1], until: bereich[2] }
+          : { sheet: zerlegt.entity, tc: zerlegt.record }
+      }
+
       steps.push({
         column: sp,
         value,
         area: area ? { from: area[1], until: area[2] } : undefined,
+        ref,
         succeeds,
       })
     }
