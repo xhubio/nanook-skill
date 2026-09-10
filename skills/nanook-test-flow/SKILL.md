@@ -55,7 +55,7 @@ cell says which one.** An empty cell means *this test does not take this step*.
 | Header | Cell | Meaning |
 |---|---|---|
 | bare sheet name (`CustomerCreate`) | `OK_1` | one case of that decision table — enter its fields |
-| same | `A1-A6` | a **range**: six cases, one call each |
+| same | `A1..A6` | a **range**: six cases, one call each |
 | `CustomerCreate<mode:check>` | `OK_1` | **the same case, read back**: open the record and assert exactly these values |
 | `<fn:name>` | `businessWithLogin` | a registered function (cell = function name) |
 | `<fn:book>` | `ref::BookingCreate::OK_1` | a registered function **with a data reference**: the function takes its inputs and its expectation from that case |
@@ -113,7 +113,7 @@ The fix is not a new step kind. **The header names the verb, the cell names the 
 
 ```
 <fn:book>                     │ <fn:book>                          │ <fn:finalize>                          │ <fn:dispose>
-ref::BookingCreate::OK_1      │ ref::BookingCreate::OK_expense     │ ref::QuoteTransitions::r2:c1           │ ref::AssetCreate::OK_3
+ref::BookingCreate::OK_1      │ ref::BookingCreate::OK_expense     │ ref::InvoiceTransitions::draft→finalize           │ ref::AssetCreate::OK_3
 ```
 
 - `ref::<Sheet>::<Case>` is the same reference syntax Nanook tables use internally
@@ -124,7 +124,7 @@ ref::BookingCreate::OK_1      │ ref::BookingCreate::OK_expense     │ ref::Qu
 - The case's expectation is consumed like a table step's. A function's verdict is held
   against `case.expectation`, never against a `-` suffix; a `-` on a referenced cell is a
   read error (two expectation sources would hide each other).
-- A **matrix cell** reference (`ref::QuoteTransitions::r2:c1`) yields the start state (the
+- A **matrix cell** reference (`ref::InvoiceTransitions::draft→finalize`) yields the start state (the
   row, itself a `ref::` to a create case), the action (the column) and the expected
   outcome (the cell). "finalized × edit = forbidden" becomes one cell, not a function.
 - A function declares whether it needs a case (`needs: 'case' | 'none'`). One that needs a
@@ -201,7 +201,7 @@ Invariants the runner enforces:
 - **"There is no create table for X"** as a reason. That describes a missing sheet, not
   a reason for a function. Add the sheet.
 - **"25 identical rows"** as a reason for creating 25 records in code. That is what the
-  range syntax (`A1-A25`) is for — check whether the runner implements ranges before the
+  range syntax (`A1..A25`) is for — check whether the runner implements ranges before the
   reader does; measured: the reader knew ranges, the runner rejected them, and no sheet
   used them.
 - **Unregistered page objects.** See checklist item 4.

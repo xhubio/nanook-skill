@@ -101,7 +101,7 @@ for (const tc of flow.cases) {
 ```ts
 // ref::Sheet::Case          → suites/<sheet>.json → tests.find(name === Case)
 // ref::Sheet::[A1-A6]       → the cases of the range, in order
-// ref::MatrixSheet::r2:c1   → { startState: resolveRef(row ref), action: column, expectation: cell }
+// ref::MatrixSheet::draft→send → { startState: resolveRef(row ref), action: column, expectation: cell }
 ```
 
 Sheet → suite file: two spellings exist in practice (`CustomerCreate` → `customercreate.json`,
