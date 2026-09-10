@@ -70,3 +70,23 @@ Works with Claude Code, Cursor, GitHub Copilot, Cline, and other agents that sup
 
 - [Nanook documentation](https://nanook.xhub.io)
 - [@xhubio/nanook-table](https://github.com/xhubio/nanook-table) — the core table engine
+
+### nanook-test-flow
+
+Connects data tables into executable **test flows**: a flow table where one row is one
+test and the columns are its steps — a case of a decision table, a page action, a
+read-back, or a registered function that takes its data **by reference**
+(`ref::Sheet::Case`, including matrix cells). Covers the flow table format, the step
+grammar, the runner contract (namespaces, consumed expectations, one starting point),
+the function registry with its mandatory "why not a table" reason, and the mistakes
+that turn flows back into code. Ships a reference reader (`references/flow-reader.ts`)
+and a runner skeleton.
+
+**Trigger phrases:** "test flow", "flow table", "connect tables to a test", "sequence of table cases", "nanook flow", "data reference for a function"
+
+#### What it does
+
+1. Explains the flow table (`<FLOW_TABLE>`, rows = tests, columns = steps) and its grammar
+2. Defines how a step's expectation comes from the referenced table and is consumed
+3. Gives functions a data reference so values and expectations leave the code
+4. Lists the runner invariants and a connecting checklist for a new project
