@@ -222,8 +222,13 @@ Invariants the runner enforces:
 5. Write the first flow sheet with the round trip: base-state function → data column →
    `<pc:>` save → `<mode:check>`. Green, then the mutation probe: change one field value
    in the data table — the flow must go red.
-6. Add a guard test with an **upper bound** on the number of registered functions
-   (measured count with the commit SHA in the header; the number may only fall).
+6. Add a guard test with **two upper bounds** — non-verb functions and verbs, counted
+   separately (measured count with the commit SHA in the header; each may only fall).
+   "Done" is not a number but a rule: every remaining non-verb entry carries a reason
+   from the four catalog classes — file · second party or bridge · base state ·
+   evaluation over a set — and the reason **names** the file, the party or the aggregate.
+   Whatever count that yields is the bound. A bound may rise only when the cause is
+   "more measured, not more defects", and the decomposition stands in the commit.
 
 ## Mistakes That Turn Flows Back Into Code
 
