@@ -77,6 +77,13 @@ table declares it) and settles it at the next page action. **If an expectation i
 open at the end of the row, the test is red**: the row named a case whose outcome nobody
 looked at — the most common way to be green without knowing anything.
 
+**Effects are measured per row, not only accepted/rejected.** A matrix or decision case
+may carry effect rows (a number assigned, a field frozen, a balance) — the same
+"payload, not arrival" rule as for single cases. The API boundary of a table carries a
+`probe`; after a verb's read-back the runner checks every effect row of the referenced
+case. 🔴 A case with effect rows whose boundary has no probe makes the step **red** ("an
+effect without an instrument"), never silently green.
+
 Consequences:
 
 - No `3-` markers on table cells: the case already says whether it is an error case.
@@ -101,6 +108,15 @@ a pair (`rememberHash` / `checkHash`) are written together and know each other's
 no `@handle` mechanism is needed. Several columns on the same namespace are several
 writes; the last wins, like any variable. The report carries the context after each step,
 so this stays visible.
+
+**Two objects of the same table** (a parent and a child category, two invoices, 25
+customers) are **not** addressed through labels. The identity of a created object is
+**sheet + case**: next to `ctx.all.CategoryCreate` (the last one written) the runner keeps
+`ctx.all['CategoryCreate/OK_parent']` per created case, and a later step or a field of a
+case addresses it as `ref::CategoryCreate::OK_parent` — in a secondary field
+(`parentCategoryId = ref::CategoryCreate::OK_parent`, Nanook cascades such fields) or in
+the cell. A second object is a **second case**; the same case twice in one row is one
+identity (the second call overwrites). No new vocabulary, and `@label` stays a label.
 
 ### The data reference for functions — the rule that keeps code out of Excel
 
@@ -130,6 +146,9 @@ ref::BookingCreate::OK_1      │ ref::BookingCreate::OK_expense     │ ref::In
   outcome (the cell). "finalized × edit = forbidden" becomes one cell, not a function.
 - A function declares whether it needs a case (`needs: 'case' | 'none'`). One that needs a
   case and is called without a reference throws — no silent fallback to literals.
+- A verb declares its call kind (`kind: 'mutation' | 'query'`): a tRPC query called as a
+  POST answers 405, the state does not change, and a "nothing changed" check would pass
+  green without ever having called the procedure.
 
 What legitimately stays a function, with the `reason` field that every registry entry
 must carry: a **file** as input or output (the cell can name a fixture, but the bytes are
