@@ -133,8 +133,19 @@ The fix is not a new step kind. **The header names the verb, the cell names the 
 ref::BookingCreate::OK_1      │ ref::BookingCreate::OK_expense     │ ref::InvoiceTransitions::draft→finalize           │ ref::AssetCreate::OK_3
 ```
 
-- `ref::<Sheet>::<Case>` is the same reference syntax Nanook tables use internally
-  (`ref::AuftragAnlegen::OK_abgerechnet` in a matrix row), so nothing new to learn.
+- `ref::<Sheet>::<Case>` is Nanook's own reference syntax, shortened. The full form is
+  `ref:<instance>:<Sheet>:<part>:<Case>` (`ReferenceDirective`): the **instance id**
+  distinguishes several objects made from the same table, the **part** selects one field
+  of it. An empty part means "the whole object" — in a table's primary section that is
+  Nanook's *field merge* (the case's fields are mixed in). 🔴 To address an object you
+  created, name the part: `parentCategoryId = ref:1:CategoryCreate:id:OK_root` creates
+  instance 1 of `OK_root` as a whole object and takes its `id` — a value that exists only
+  after creation, which the resolver reads from `ctx.all['Sheet/Case#instance']`. Two
+  categories are `ref:1:…` and `ref:2:…`; the same instance twice is the same object; a
+  tree of depth five is a chain of five cases. Primary data, secondary data, matrix axes
+  and flow cells read the **same** form — one word, one meaning. (The project first tried
+  to introduce a second word for "address"; the collision was a forgotten part, not a
+  missing word.)
 - The runner resolves the case and hands it to the function: `args.case = { sheet, tc,
   fields, secondary, expectation }`. The function reads its values **from there** — no
   literals.
