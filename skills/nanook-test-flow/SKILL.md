@@ -190,7 +190,11 @@ Invariants the runner enforces:
 2. **`<mode:check>` needs a read-back.** A page object without `readBack` cannot check;
    the runner throws instead of passing — an assertion without an instrument only looks
    like one. At the API boundary `<mode:check>` is rejected: what must hold after creating
-   belongs as an **effect** into the decision table, where a measurer measures it.
+   belongs as an **effect** into the decision table, where a measurer measures it. But a
+   `<mode:check>` on a **UI** column is allowed even when the case was created at the API
+   earlier in the row — the check reads "the values of this case" through the page
+   object's `readBack`; where the record came from does not matter. That is how a flow
+   states "created via API, seen in the mask", the sentence no single table can say.
 3. **A broken chain says what was not measured.** On an exception the report lists the
    remaining step headers ("not driven: → …"). A torn chain must not look like a single
    failure when nothing is known about the rest.
@@ -233,6 +237,9 @@ Invariants the runner enforces:
   reader does; measured: the reader knew ranges, the runner rejected them, and no sheet
   used them.
 - **Unregistered page objects.** See checklist item 4.
+- **One action sheet with an `action` field** that picks the procedure. One sheet, one
+  boundary, one procedure — three operations are three sheets. A dispatch field is a
+  second sheet→procedure mapping next to the app's register.
 - **Matrix tables that no flow reads.** Five matrix sheets existed, 24 functions
   re-implemented their cells. A matrix cell reference from a function fixes both.
 - **Editing a generated artifact** instead of its source. The direction is one way:
